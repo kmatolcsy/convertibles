@@ -3,12 +3,12 @@ from selenium import webdriver
 import numpy as np
 
 
-class Scraper(object):
+class Rates(object):
     path = r'C:\Users\kmato\PycharmProjects\chromedriver_win32\chromedriver.exe'
     url = \
         'https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/euro_area_yield_curves/html/index.en.html'
 
-    def data(self):
+    def get(self):
         # Start the WebDriver and load the page
         driver = webdriver.Chrome(self.path)
         driver.get(self.url)

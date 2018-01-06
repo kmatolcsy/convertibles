@@ -1,11 +1,11 @@
-from ecb import Scraper
+from ecb import Rates
 
 
 def test():
-    yield_curve = Scraper().data()
-    assert len(yield_curve) == 33
+    rates = Rates().get()
+    assert len(rates) == 33
     print("Test function executed successfully \n",
-          yield_curve)
+          rates)
 
 
 if __name__ == "__main__":
