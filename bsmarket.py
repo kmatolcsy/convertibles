@@ -51,7 +51,7 @@ class YieldCurve(object):
                     print(e)
                     self.date -= dt.timedelta(days=1)
                 finally:
-                    self.tenors = np.array([1 / 4, 1 / 2, 3 / 4, 1, 2, 3, 5, 7, 10, 20, 30])
+                    self.tenors = np.array([1/12, 1/4, 1/2, 1, 2, 3, 5, 7, 10, 20, 30])
         elif ccy == "EUR":
             self.tenors = np.array([1 / 4, 1 / 2, 3 / 4] + [x for x in range(1, 31)])  # build tenors
             self.rates = ecb.Rates().get()  # get rates from ECB web
