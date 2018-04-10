@@ -14,7 +14,7 @@ class BinomialTree(object):
 
 class CRR(BinomialTree):
 
-    def __init__(self, steps, ticker, ccy, option_type='call', maturity=1, strike=None):
+    def __init__(self, steps, ticker, ccy, option_type='call', warrant=False, maturity=1, strike=None):
         # pass input to parent
         super().__init__(steps)
 
@@ -23,8 +23,12 @@ class CRR(BinomialTree):
         self.ticker = ticker
         self.ccy = ccy
         self.option_type = option_type
+        self.warrant = warrant
         self.maturity = maturity        # years
         self.strike = strike
+        # dilution
+        self.stock_out = 168.07  # million
+        self.cb_out = 1.2  # million
 
         # objects
         expiry = dt.date.today() + dt.timedelta(days=365*maturity)
@@ -34,11 +38,6 @@ class CRR(BinomialTree):
 
         # set parameters
         self.volatility = max(self.stock.hist_vol, self.option.implied_vol())
-        print("""
-            Volatility
-            historical: {}
-            implied: {} 
-            """.format(self.stock.hist_vol, self.option.implied_vol()))
         self.dt = self.maturity / self.steps
         self.up = np.exp(self.volatility * self.dt ** 0.5)
         self.down = 1 / self.up
@@ -49,6 +48,25 @@ class CRR(BinomialTree):
         # build option tree
         self.__build_derivative()
 
+    def __prob(self, step):
+        f = self.risk_free.forward(step * self.dt, (step + 1) * self.dt)
+        return (np.exp(f * self.dt) - self.down) / (self.up - self.down)
+
+    def __diluted(self, stock):
+        if self.warrant:
+            return (self.stock_out * stock + self.cb_out * self.strike * 5) / (self.stock_out + self.cb_out * 5)
+        else:
+            return stock
+
+    def __payoff_function(self, stock):
+        if self.option_type == 'call':
+            return max(self.__diluted(stock) - self.strike, 0)
+        elif self.option_type == 'put':
+            return max(self.strike - self.__diluted(stock), 0)
+        else:
+            print("unknown option_type")
+            raise Exception
+
     def __build_stock(self):
         self.tree[0][0] = self.stock.price
         for i in range(1, self.size):
@@ -56,19 +74,6 @@ class CRR(BinomialTree):
                 self.tree[j][i - 1] = self.tree[j - 1][i - 1] * self.up
             self.tree[i][i] = self.tree[i - 1][i - 1] * self.down
         return None
-
-    def __payoff_function(self, stock):
-        if self.option_type == 'call':
-            return max(stock - self.strike, 0)
-        elif self.option_type == 'put':
-            return max(self.strike - stock, 0)
-        else:
-            print("Wrong option_type")
-            raise Exception
-
-    def __prob(self, step):
-        f = self.risk_free.forward(step * self.dt, (step + 1) * self.dt)
-        return ((1 + f) ** self.dt - self.down) / (self.up - self.down)
 
     def __build_derivative(self):
         for i in range(self.size):
@@ -102,7 +107,7 @@ class Oracle(BinomialTree):
         # continuous dividend
         self.div_cont = 0.00
         # discrete dividend
-        self.div_disc = 0.03
+        self.div_disc = 0.00
         self.div_freq = 0.5
         # credit risk
         self.spread = spread
@@ -226,7 +231,7 @@ class Convertible(BinomialTree):
         # continuous dividend
         self.div_cont = 0.00
         # discrete dividend
-        self.div_disc = 0.03
+        self.div_disc = 0.00
         self.div_freq = 0.5
         # credit risk
         self.spread = spread

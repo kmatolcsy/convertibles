@@ -289,6 +289,8 @@ class Option(object):
     def __strike_market(self, table):
         if self.strike is None:
             self.strike = self.stock.price
+        if self.strike > table.index.values[-1][0]:
+            return table.index.values[-1][0]
         for x, y in table.index.values:
             if self.strike <= x:
                 return x
@@ -327,7 +329,7 @@ class Option(object):
 class Bond(object):
     __a = np.array([
         np.array([.0, .045, .07, .095, .12]),
-        np.array([.0, .055, .084, .109, .134]),
+        np.array([.0, .055, .085, .11, .135]),
         np.array([.0, .07, .105, .13, .155]),
         np.array([.0, .125, .2, .25, .3]),
         np.array([.0, .225, .35, .44, .465]),
